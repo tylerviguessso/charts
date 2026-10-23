@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Suno Top 50 · Collect</title>
+<style>
+:root{--bg:#faf8f5;--fg:#1c1a17;--mut:#7a746b;--card:#fff;--line:#e7e2da;--acc:#e5391f;--up:#1a8f4c;--dn:#c2410c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14130f;--fg:#f2efe9;--mut:#9a948a;--card:#1d1b17;--line:#2e2b25;--acc:#ff6a4d;--up:#4cc784;--dn:#ff9a62}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14130f;--fg:#f2efe9;--mut:#9a948a;--card:#1d1b17;--line:#2e2b25;--acc:#ff6a4d;--up:#4cc784;--dn:#ff9a62}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:26px;margin:0 0 4px}h1 span{color:var(--acc)}
+.sub{color:var(--mut);font-size:13px;margin-bottom:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 8px}h2 b{color:var(--acc)}
+textarea{width:100%;min-height:110px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:12.5px/1.4 ui-monospace,Menlo,monospace}
+button{margin:8px 8px 0 0;padding:9px 15px;border:0;border-radius:8px;background:var(--acc);color:#fff;font:600 14px system-ui;cursor:pointer}
+button.ghost{background:none;color:var(--fg);border:1px solid var(--line)}
+.hint{color:var(--mut);font-size:12.5px;margin:6px 0 0}
+.ok{color:var(--up)}.bad{color:var(--dn)}
+#outbox{min-height:140px}
+</style></head>
+<body><main>
+<h1>Suno Top 50 <span>Collect</span></h1>
+<div class="sub">Turns a copied Suno playlist page into a clean list of titles and play counts. Your list is remembered in this browser until you clear it.</div>
+
+<section><h2><b>1.</b> Paste a playlist page</h2>
+<textarea id="src" placeholder="Open the playlist on suno.com, scroll to the bottom so every song loads, select all (Ctrl/Cmd+A), copy, and paste here."></textarea>
+<button id="add">Add to my list</button><button class="ghost" id="wipe">Clear paste box</button>
+<div class="hint" id="msg">Suno loads about 50 songs at a time. Scroll down to load more, copy again, and paste again: songs you add twice are merged, not duplicated, and the newest count wins.</div></section>
+
+<section><h2><b>2.</b> Your list <span id="count" class="hint"></span></h2>
+<textarea id="outbox" readonly></textarea>
+<button id="copy">Copy list</button><button class="ghost" id="clear">Clear my list</button>
+<div class="hint" id="warn"></div>
+<div class="hint">Paste this into the box in step 3 of the admin page. Each line is <code>Title | Artist | Plays</code>.</div></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const KEY = 'suno-collect-v1';
+let list = new Map();
+try { (JSON.parse(localStorage.getItem(KEY) || '[]')).forEach(s => list.set(key(s), s)); } catch (_) {}
+function key(s) { return (s.title + '|' + s.artist).toLowerCase(); }
+function persist() { try { localStorage.setItem(KEY, JSON.stringify([...list.values()])); } catch (_) {} }
+
+/* "1.3K" -> 1300 (flagged as rounded), "1,234" -> 1234 */
+function toNum(s) {
+  const m = s.replace(/,/g, '').trim().match(/^(\d+(?:\.\d+)?)\s*([KkMmBb])?$/);
+  if (!m) return null;
+  const mult = {k: 1e3, m: 1e6, b: 1e9}[(m[2] || '').toLowerCase()] || 1;
+  return {n: Math.round(parseFloat(m[1]) * mult), approx: !!m[2]};
+}
+
+/* Each song reads: duration, title, [badge], artist, "plays · style", duration.
+   Find every "plays ·" line, then walk back to the nearest duration to find the title. */
+function extract(text) {
+  text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  const L = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const DUR = /^\d{1,2}:\d{2}(:\d{2})?$/, out = [];
+  for (let i = 0; i < L.length; i++) {
+    const m = L[i].match(/^(\d[\d.,]*\s?[KkMmBb]?)\s*·/);
+    let tok = m && m[1];
+    if (!tok && /^\d[\d.,]*\s?[KkMmBb]?$/.test(L[i]) && L[i + 1] && L[i + 1][0] === '·') tok = L[i];
+    const pn = tok && toNum(tok);
+    if (!pn) continue;
+    let d = -1;
+    for (let k = i - 1; k >= Math.max(0, i - 5); k--) if (DUR.test(L[k])) { d = k; break; }
+    if (d < 0 || d + 1 >= i) continue;
+    out.push({title: L[d + 1].replace(/\|/g, '/'), artist: d + 1 < i - 1 ? L[i - 1].replace(/\|/g, '/') : '', plays: pn.n, approx: pn.approx});
+  }
+  return out;
+}
+
+function show() {
+  const rows = [...list.values()].sort((a, b) => b.plays - a.plays);
+  $('outbox').value = rows.map(s => s.title + ' | ' + s.artist + ' | ' + s.plays).join('\n');
+  $('count').textContent = '· ' + rows.length + ' songs';
+  const ap = rows.filter(s => s.approx).length;
+  $('warn').innerHTML = ap ? '<span class="bad">' + ap + ' of these counts are rounded (like 1.3K).</span> Suno’s page hides exact numbers, so small daily gains on those songs can show as 0.' : '';
+}
+
+$('add').onclick = () => {
+  const found = extract($('src').value);
+  if (!found.length) { $('msg').innerHTML = '<span class="bad">Couldn’t find any songs.</span> Make sure you copied the whole playlist page (select all, then copy), not just part of it. If it still fails, send me the first 30 lines you copied.'; return; }
+  let added = 0, updated = 0;
+  for (const s of found) { const k = key(s); list.has(k) ? updated++ : added++; list.set(k, s); }
+  persist(); show();
+  $('msg').innerHTML = '<span class="ok">Found ' + found.length + ' songs:</span> ' + added + ' new, ' + updated + ' already in your list (updated).';
+  $('src').value = '';
+};
+$('wipe').onclick = () => { $('src').value = ''; };
+$('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('outbox').value); $('msg').innerHTML = '<span class="ok">List copied.</span>'; }
+  catch (_) { $('outbox').select(); $('msg').textContent = 'Select the text in step 2 and copy it manually.'; }
+};
+$('clear').onclick = () => { if (!confirm('Delete your whole list?')) return; list = new Map(); persist(); show(); };
+show();
+</script></body></html>
