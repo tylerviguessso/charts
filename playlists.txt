@@ -1,0 +1,12 @@
+# One Suno playlist link per line (albums and EPs). Lines starting with # are ignored.
+# Each playlist page shows at most 50 songs, so keep every playlist at 50 or fewer.
+https://suno.com/playlist/f3d29afd-7119-4712-8105-bfadc43516fd?sh=AQvFJxodhBkFPzS0
+https://suno.com/playlist/39103114-26b8-4004-be3a-1b6dcf81fb6a?sh=GBMjvVYemAylIkX1
+https://suno.com/playlist/b5d47f69-560d-42db-9d9f-2eded093446c?sh=EaooEz5w2GILCYke
+https://suno.com/playlist/520b9a91-b30d-4e01-95fd-2e0e5b483562?sh=2fusBvgREAZovQRu
+https://suno.com/playlist/bf02caae-965d-4235-be43-a7d25bcc2913?sh=eivpVNSeHn24GbGU
+https://suno.com/playlist/9f1c2b97-0a47-42fa-8769-593ec2b76ef7?sh=zOfM6q0hxx0RSurp
+https://suno.com/playlist/92965d2d-a8ba-425e-b450-521a33dde230?sh=2XGVCzD8JyEyc38o
+https://suno.com/playlist/0c780114-1681-4ca3-8738-676b41da6778?sh=loAASKc3ciCW28ob
+https://suno.com/playlist/a8dcfc75-b14f-4481-8ac8-00e6b2c49516?sh=kvB9t6eP0VkrF3pz
+https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7?sh=0c2IwVK18OJ9aHwR
