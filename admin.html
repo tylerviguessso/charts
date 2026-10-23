@@ -26,7 +26,7 @@ label{font-size:13px;display:block;margin-top:8px}
 <h1>Suno Top 50 <span>Admin</span></h1>
 <div class="sub">Builds the next snapshot.json. Nothing is uploaded anywhere: you download the file and host it yourself.</div>
 
-<section><h2><b>1.</b> Last snapshot (skip on the very first run)</h2>
+<section><h2><b>1.</b> Last snapshot</h2>
 <input type="file" id="prevFile" accept=".json,application/json">
 <div class="hint" id="prevInfo">No previous snapshot loaded.</div></section>
 
@@ -49,6 +49,7 @@ label{font-size:13px;display:block;margin-top:8px}
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const SNAPSHOT_URL = 'https://tylerviguessso.github.io/charts/snapshot.json';
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 let prev = null, snapshot = null;
 
@@ -72,15 +73,22 @@ async function fetchAll(ids, tok) {
 }
 const ids = () => [...new Set(($('pls').value.match(UUID) || []).map(s => s.toLowerCase()))];
 
+function loadPrev(obj, src) {
+  if (!obj || !Array.isArray(obj.songs)) throw 0;
+  prev = obj;
+  if (prev.playlists && prev.playlists.length) $('pls').value = prev.playlists.map(i => 'https://suno.com/playlist/' + i).join('\n');
+  $('prevInfo').innerHTML = '<span class="ok">Loaded ' + src + ':</span> ' + prev.songs.length + ' songs, saved ' + new Date(prev.time).toLocaleString();
+}
 $('prevFile').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
-  try {
-    prev = JSON.parse(await f.text());
-    if (!Array.isArray(prev.songs)) throw 0;
-    if (prev.playlists && prev.playlists.length) $('pls').value = prev.playlists.map(i => 'https://suno.com/playlist/' + i).join('\n');
-    $('prevInfo').innerHTML = '<span class="ok">Loaded:</span> ' + prev.songs.length + ' songs, saved ' + new Date(prev.time).toLocaleString();
-  } catch (_) { prev = null; $('prevInfo').innerHTML = '<span class="bad">That doesn’t look like a snapshot file.</span>'; }
+  try { loadPrev(JSON.parse(await f.text()), 'file'); }
+  catch (_) { prev = null; $('prevInfo').innerHTML = '<span class="bad">That doesn’t look like a snapshot file.</span>'; }
 };
+/* Try the live snapshot first, so you usually don't need to upload anything. */
+fetch(SNAPSHOT_URL + '?t=' + Date.now(), {cache: 'no-store'})
+  .then(r => { if (!r.ok) throw 0; return r.json(); })
+  .then(j => loadPrev(j, 'the live snapshot'))
+  .catch(() => { $('prevInfo').textContent = 'No live snapshot found (normal on the first run). You can upload one instead.'; });
 
 $('direct').onclick = async () => {
   const L = ids(); if (!L.length) { $('fetchInfo').textContent = 'Add at least one playlist link first.'; return; }
