@@ -1,0 +1,3 @@
+# One Suno playlist link per line. Lines starting with # are ignored.
+# Add more playlists by adding more lines.
+https://suno.com/playlist/cbfd7dc3-e9ff-48e4-a883-b777daaf844d
