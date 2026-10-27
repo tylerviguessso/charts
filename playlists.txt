@@ -1,5 +1,6 @@
 # One Suno playlist link per line (albums and EPs). Lines starting with # are ignored.
 # Each playlist page shows at most 50 songs, so keep every playlist at 50 or fewer.
+# Tyler songs
 https://suno.com/playlist/f3d29afd-7119-4712-8105-bfadc43516fd?sh=AQvFJxodhBkFPzS0
 https://suno.com/playlist/39103114-26b8-4004-be3a-1b6dcf81fb6a?sh=GBMjvVYemAylIkX1
 https://suno.com/playlist/b5d47f69-560d-42db-9d9f-2eded093446c?sh=EaooEz5w2GILCYke
@@ -10,3 +11,13 @@ https://suno.com/playlist/92965d2d-a8ba-425e-b450-521a33dde230?sh=2XGVCzD8JyEyc3
 https://suno.com/playlist/0c780114-1681-4ca3-8738-676b41da6778?sh=loAASKc3ciCW28ob
 https://suno.com/playlist/a8dcfc75-b14f-4481-8ac8-00e6b2c49516?sh=kvB9t6eP0VkrF3pz
 https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7?sh=0c2IwVK18OJ9aHwR
+#Turnipdabeats songs
+https://suno.com/playlist/aa909bd8-ae3c-4ea7-89fb-61fc52b296cb
+https://suno.com/playlist/5b40a76b-995c-42c9-a0b8-f47c8b2fd8b7
+https://suno.com/playlist/b6168610-77c6-47d0-9f9a-ec90dde38b01
+https://suno.com/playlist/2a374440-a785-48a8-8390-060214712c4c
+https://suno.com/playlist/5afd05ea-00df-4ffa-8178-4bcef1314dac
+https://suno.com/playlist/80268bf4-b260-47b3-9d5b-2a67b0efe31a
+https://suno.com/playlist/063563d5-689e-4d93-81b4-e884a5258d83
+https://suno.com/playlist/eac091cb-8d44-4b67-bdbd-d14d582a5078
+
