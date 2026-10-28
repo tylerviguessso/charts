@@ -1,0 +1,197 @@
+name: Update Suno chart
+
+# Runs every day around 11:59 AM Los Angeles time. Two UTC times are listed because
+# GitHub's clock ignores daylight saving; the script only goes ahead at the right one.
+# You can also run it any time: Actions tab > Update Suno chart > Run workflow.
+on:
+  schedule:
+    - cron: '59 18 * * *'
+    - cron: '59 19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-chart
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the snapshot
+        uses: actions/github-script@v8
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        with:
+          script: |
+            const fs = require('fs');
+            const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+            const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+            const MARK = '\u0001';
+
+            // ---------- when to run ----------
+            let prev = null;
+            try { prev = JSON.parse(fs.readFileSync('snapshot.json', 'utf8')); } catch (e) {}
+            if (process.env.FORCE !== 'true') {
+              const o = {};
+              new Intl.DateTimeFormat('en-US', {timeZone: 'America/Los_Angeles', hourCycle: 'h23', hour: '2-digit', minute: '2-digit'})
+                .formatToParts(new Date()).forEach(p => o[p.type] = +p.value);
+              const mins = o.hour * 60 + o.minute;
+              if (mins < 11 * 60 + 50 || mins >= 14 * 60) { console.log('Not 11:59 AM in Los Angeles yet (or long past). Skipping.'); return; }
+              if (prev && Date.now() - new Date(prev.time) < 20 * 36e5) { console.log('Last snapshot is under 20 hours old. Skipping.'); return; }
+            }
+
+            // ---------- helpers ----------
+            function decode(s) {
+              return s.replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+                .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d))
+                .replace(/&middot;/g, '·').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+            }
+            // "1.3K" -> 1300, and the range of real values that would display as "1.3K"
+            function toNum(tok) {
+              const m = tok.replace(/,/g, '').trim().match(/^(\d+)(?:\.(\d+))?\s*([KkMmBb])?$/);
+              if (!m) return null;
+              const mult = {k: 1e3, m: 1e6, b: 1e9}[(m[3] || '').toLowerCase()] || 1;
+              const n = Math.round(parseFloat(m[1] + (m[2] ? '.' + m[2] : '')) * mult);
+              const unit = mult * Math.pow(10, -(m[2] || '').length);
+              return m[3] ? {n, approx: true, lo: n - unit / 2, hi: n + unit / 2} : {n, approx: false, lo: n, hi: n};
+            }
+
+            // ---------- way 1: Suno's data feed (exact counts, every song) ----------
+            function clipsOf(j) {
+              if (!j) return [];
+              if (Array.isArray(j)) return j;
+              for (const k of ['playlist_clips', 'album_clips', 'clips', 'tracks', 'songs', 'items']) if (Array.isArray(j[k])) return j[k];
+              return Object.values(j).find(v => Array.isArray(v) && v.length && typeof v[0] === 'object') || [];
+            }
+            async function feedPages(base, id) {
+              const out = new Map();
+              let reached = false;
+              for (let p = 0; p <= 60; p++) {
+                const r = await fetch('https://studio-api-prod.suno.com' + base + id + '/?page=' + p,
+                  {headers: {'user-agent': UA, accept: 'application/json', origin: 'https://suno.com', referer: 'https://suno.com/'}});
+                if (!r.ok) { if (p <= 1) { console.log('  ' + base + ' page ' + p + ' answered ' + r.status); continue; } break; }
+                const j = await r.json().catch(() => null);
+                if (!j) break;
+                reached = true;
+                const list = clipsOf(j);
+                if (p === 0 && !list.length) console.log('  ' + base + ' answered but no songs were found. Its fields: ' + Object.keys(j).join(', '));
+                let added = 0;
+                for (const x of list) {
+                  const c = x.clip || x;
+                  if (c && c.id && typeof c.title === 'string' && !out.has(c.id)) {
+                    out.set(c.id, {id: c.id, title: c.title || 'Untitled', artist: c.display_name || c.handle || '', plays: +c.play_count || 0, approx: false,
+                      img: c.image_url || c.image_large_url || ('https://cdn2.suno.ai/image_' + c.id + '.jpeg')});
+                    added++;
+                  }
+                }
+                if (!added && p >= 1) break;
+                if (j.num_total_results && out.size >= j.num_total_results) break;
+              }
+              return reached && out.size ? [...out.values()] : null;
+            }
+            async function viaApi(id, kind) {
+              const bases = kind === 'album' ? ['/api/album/', '/api/albums/', '/api/playlist/'] : ['/api/playlist/'];
+              for (const base of bases) { const s = await feedPages(base, id); if (s) return s; }
+              return null;
+            }
+
+            // ---------- way 2: the public playlist page (first ~50 songs, some counts rounded) ----------
+            function parsePage(raw) {
+              let h = raw.replace(/<!--[\s\S]*?-->/g, '').replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '');
+              h = h.replace(/<a\b[^>]*href="[^"]*\/song\/([0-9a-f-]{36})[^"]*"[^>]*>/gi, (m, id) => '\n' + MARK + id + '\n');
+              const L = decode(h.replace(/<[^>]+>/g, '\n')).split('\n').map(s => s.trim()).filter(Boolean);
+              const DUR = /^\d{1,2}:\d{2}(:\d{2})?$/, out = [], seen = new Set();
+              for (let i = 0; i < L.length; i++) {
+                const m = L[i].match(/^(\d[\d.,]*\s?[KkMmBb]?)\s*·/);
+                let tok = m && m[1];
+                if (!tok && /^\d[\d.,]*\s?[KkMmBb]?$/.test(L[i]) && L[i + 1] && L[i + 1][0] === '·') tok = L[i];
+                const pn = tok && toNum(tok);
+                if (!pn) continue;
+                let d = -1;
+                for (let k = i - 1; k >= Math.max(0, i - 7); k--) if (DUR.test(L[k])) { d = k; break; }
+                if (d < 0) continue;
+                let k = d + 1, id = null;
+                while (k < i && L[k][0] === MARK) { id = L[k].slice(1); k++; }
+                if (k >= i || !id || seen.has(id)) continue;
+                seen.add(id);
+                out.push({id, title: L[k], artist: k < i - 1 ? L[i - 1] : '', plays: pn.n, approx: pn.approx, lo: pn.lo, hi: pn.hi});
+              }
+              const t = L.map(s => s.match(/^·?\s*(\d+)\s+songs?$/)).find(Boolean);
+              out.total = t ? +t[1] : null;
+              return out;
+            }
+            // If the page's hidden data holds the exact count, use it, but only when it agrees with the rounded number shown.
+            function sharpen(raw, songs) {
+              const pcs = [...raw.matchAll(/play_count\\*"\s*:\s*(\d+)/g)].map(m => ({pos: m.index, n: +m[1]}));
+              if (!pcs.length) return 0;
+              const occ = [];
+              for (const s of songs) { let p = raw.indexOf(s.id); while (p !== -1) { occ.push({pos: p, id: s.id}); p = raw.indexOf(s.id, p + 1); } }
+              occ.sort((a, b) => a.pos - b.pos);
+              let fixed = 0;
+              for (const s of songs) {
+                if (!s.approx) continue;
+                const cands = new Set();
+                occ.forEach((o, i) => {
+                  if (o.id !== s.id) return;
+                  const nx = (occ.slice(i + 1).find(x => x.id !== s.id) || {pos: Infinity}).pos;
+                  const c = pcs.find(c => c.pos > o.pos && c.pos < nx && c.n >= s.lo && c.n < s.hi);
+                  if (c) cands.add(c.n);
+                });
+                if (cands.size === 1) { s.plays = [...cands][0]; s.approx = false; fixed++; }
+              }
+              return fixed;
+            }
+            async function viaPage(id) {
+              const r = await fetch('https://suno.com/playlist/' + id, {headers: {'user-agent': UA, accept: 'text/html'}});
+              const raw = await r.text();
+              if (!r.ok) throw new Error('suno.com answered ' + r.status + ' for the playlist page');
+              const songs = parsePage(raw);
+              if (!songs.length) throw new Error('No songs found in the page. It began: ' + raw.slice(0, 200).replace(/\s+/g, ' '));
+              const fixed = sharpen(raw, songs);
+              console.log('  page: ' + songs.length + ' of ' + (songs.total || '?') + ' songs, ' + fixed + ' counts sharpened to exact');
+              return songs;
+            }
+
+            // ---------- run ----------
+            const lines = fs.readFileSync('playlists.txt', 'utf8').split('\n').map(s => s.replace(/(^|\s)#.*/, '').trim()).filter(Boolean);
+            if (!lines.length) throw new Error('playlists.txt has no playlist links.');
+            const items = [];
+            for (const line of lines) {
+              let m = line.match(UUID);
+              if (!m) { const r = await fetch(line, {headers: {'user-agent': UA}, redirect: 'follow'}); m = (r.url || '').match(UUID); }
+              if (!m) throw new Error('Could not find a playlist id in: ' + line);
+              items.push({id: m[0].toLowerCase(), album: /\/album\//i.test(m.input)});
+            }
+            const playlistIds = items.map(i => i.id);
+            const rows = new Map();
+            for (const it of items) {
+              console.log((it.album ? 'Album ' : 'Playlist ') + it.id);
+              let songs = null;
+              try { songs = await viaApi(it.id, it.album ? 'album' : 'playlist'); } catch (e) { console.log('  feed failed: ' + e.message); }
+              if (songs) console.log('  feed: ' + songs.length + ' songs, exact counts');
+              else if (it.album) { console.log('::warning::Could not read album ' + it.id + '. Its songs are left off the chart until this is fixed.'); continue; }
+              else songs = await viaPage(it.id);
+              songs.forEach(s => { if (!rows.has(s.id)) rows.set(s.id, s); });
+            }
+
+            const pm = new Map(prev ? prev.songs.map(s => [s.id, s]) : []);
+            const songs = [...rows.values()].map(r => {
+              const p = pm.get(r.id);
+              return {id: r.id, title: r.title, artist: r.artist, plays: r.plays, approx: !!r.approx, img: r.img || (p && p.img) || '',
+                gain: p ? Math.max(0, r.plays - p.plays) : 0, isNew: !!prev && !p, prevRank: p ? p.rank : null};
+            }).sort((a, b) => b.gain - a.gain || b.plays - a.plays);
+            songs.forEach((s, i) => s.rank = i + 1);
+            fs.writeFileSync('snapshot.json', JSON.stringify({version: 1, time: new Date().toISOString(), prevTime: prev ? prev.time : null, playlists: playlistIds, songs}));
+            console.log('Saved snapshot.json with ' + songs.length + ' songs' + (prev ? '' : ' (first run, so every gain is 0)') + '.');
+
+      - name: Save the snapshot
+        run: |
+          git config user.name "chart-bot"
+          git config user.email "chart-bot@users.noreply.github.com"
+          git add snapshot.json
+          git diff --cached --quiet || (git commit -m "Update snapshot" && git push)
