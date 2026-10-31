@@ -37,3 +37,5 @@ https://suno.com/playlist/0c780114-1681-4ca3-8738-676b41da6778 | compilation | a
 https://suno.com/playlist/a8dcfc75-b14f-4481-8ac8-00e6b2c49516 | ep | artist=Tÿler, Genno
 https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7 | album | artist=Tÿler
 https://suno.com/album/e0bb91fe-b943-46a9-91b4-04d06ac9ec98 | album | artist=Tÿler
+https://suno.com/album/88ddc275-70a6-4a8b-9a9f-b39897c489ff | album | artist=TurnipDaBeets
+https://suno.com/album/b18a9375-7f21-44ef-86d1-f6fdb75eb57b | album | artist=TurnipDaBeets
