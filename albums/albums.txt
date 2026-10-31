@@ -39,3 +39,36 @@ https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7 | album | artist=
 https://suno.com/album/e0bb91fe-b943-46a9-91b4-04d06ac9ec98 | album | artist=Tÿler
 https://suno.com/album/88ddc275-70a6-4a8b-9a9f-b39897c489ff | album | artist=TurnipDaBeets
 https://suno.com/album/b18a9375-7f21-44ef-86d1-f6fdb75eb57b | album | artist=TurnipDaBeets
+
+# Turnipdabeats songs
+https://suno.com/playlist/aa909bd8-ae3c-4ea7-89fb-61fc52b296cb
+https://suno.com/playlist/5b40a76b-995c-42c9-a0b8-f47c8b2fd8b7
+https://suno.com/playlist/b6168610-77c6-47d0-9f9a-ec90dde38b01
+https://suno.com/playlist/2a374440-a785-48a8-8390-060214712c4c
+https://suno.com/playlist/5afd05ea-00df-4ffa-8178-4bcef1314dac
+https://suno.com/playlist/80268bf4-b260-47b3-9d5b-2a67b0efe31a
+https://suno.com/playlist/063563d5-689e-4d93-81b4-e884a5258d83
+https://suno.com/playlist/eac091cb-8d44-4b67-bdbd-d14d582a5078
+https://suno.com/album/b18a9375-7f21-44ef-86d1-f6fdb75eb57b
+https://suno.com/album/88ddc275-70a6-4a8b-9a9f-b39897c489ff
+# dgnrts songs
+https://suno.com/playlist/066f794a-e9cd-4ddc-bafe-18d8293729a4
+https://suno.com/playlist/a66218c6-8cc8-4f6f-9e02-f0e4b630738e
+https://suno.com/playlist/33b72da9-af02-4b7e-80bc-ccf3e4153a78
+# Perry Badeaux
+https://suno.com/playlist/35dfd3cf-5efc-49cc-9f7e-f8a7485c0194
+https://suno.com/playlist/3d1a6a3f-1e51-41d2-9039-53d90747904e
+https://suno.com/playlist/0cbe81de-19e4-4ba5-bc9a-7d2e61e4edb7
+https://suno.com/playlist/1f83edf4-ef04-4c96-ab20-8392b644703b
+https://suno.com/playlist/9dcc941e-c8eb-4fab-93e6-0edb42d3e2b3
+https://suno.com/playlist/7c6dae9e-71b9-4b0d-9710-4a1965cda100
+https://suno.com/playlist/a529d759-397b-4faa-ba69-394ea56cfad2
+https://suno.com/playlist/43fdbad4-6441-4f6f-a0e9-3f43b3eb867d
+https://suno.com/playlist/ba5d1ac9-854a-47fc-9085-39cfbdef832d
+https://suno.com/playlist/f0d751a8-9c02-4c7a-ad28-47f015b9995a
+https://suno.com/playlist/63aed1a6-409e-4637-b6cf-df7f9b809270
+https://suno.com/playlist/ffc6effe-8463-41fc-b796-d106acb3ad75
+https://suno.com/playlist/7f9a7141-69e7-4bfd-82c2-6c33251ce029
+https://suno.com/playlist/812f05b6-0077-4af8-b378-a5959b30ff9c
+https://suno.com/album/80d5c058-966b-4c3e-8bed-650fbca21dfb
+https://suno.com/album/ab65dfbe-e0ca-45f0-9d89-0f0aa2b13065
