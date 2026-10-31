@@ -35,5 +35,5 @@ https://suno.com/playlist/9f1c2b97-0a47-42fa-8769-593ec2b76ef7?sh=zOfM6q0hxx0RSu
 https://suno.com/playlist/92965d2d-a8ba-425e-b450-521a33dde230?sh=2XGVCzD8JyEyc38o
 https://suno.com/playlist/0c780114-1681-4ca3-8738-676b41da6778?sh=loAASKc3ciCW28ob
 https://suno.com/playlist/a8dcfc75-b14f-4481-8ac8-00e6b2c49516?sh=kvB9t6eP0VkrF3pz
-https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7?sh=0c2IwVK18OJ9aHwR
+https://suno.com/playlist/16bef59a-6b73-405b-9b41-131e47d03aa7 | album | artist=Tÿler
 https://suno.com/album/e0bb91fe-b943-46a9-91b4-04d06ac9ec98 | album | artist=Tÿler
