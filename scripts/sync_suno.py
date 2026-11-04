@@ -13,9 +13,11 @@ import time
 import urllib.error
 import urllib.request
 
-USERNAMES = "charts/usernames.txt"
-ALBUMS = "charts/albums/albums.txt"
-PLAYLISTS = "charts/playlists.txt"
+# Paths are relative to the repo root. If your site is the repo named "charts",
+# the repo root IS .io/charts/, so these match .io/charts/albums/albums.txt etc.
+USERNAMES_CANDIDATES = ["usernames.txt", "charts/usernames.txt"]  # first one that exists is used
+ALBUMS = "albums/albums.txt"
+PLAYLISTS = "playlists.txt"
 HOSTS = ["https://studio-api-prod.suno.com", "https://studio-api.prod.suno.com"]
 MAX_PAGES = 30
 DELAY = 1.5  # seconds between requests, to be polite
@@ -117,10 +119,12 @@ def collect(handle):
 
 
 def read_handles():
-    if not os.path.exists(USERNAMES):
+    path = next((p for p in USERNAMES_CANDIDATES if os.path.exists(p)), None)
+    if not path:
         return []
+    print("Reading usernames from %s" % path)
     handles = []
-    for line in open(USERNAMES, encoding="utf-8"):
+    for line in open(path, encoding="utf-8"):
         line = line.split("#", 1)[0].strip().lstrip("@")
         if line and line not in handles:
             handles.append(line)
@@ -153,7 +157,7 @@ def append_lines(path, lines):
 def main():
     handles = read_handles()
     if not handles:
-        print("No usernames in %s. Nothing to do." % USERNAMES)
+        print("No usernames file found (looked for: %s)." % ", ".join(USERNAMES_CANDIDATES))
         return 0
     existing = known_ids()
     new_links, report, ok = [], [], 0
@@ -178,6 +182,7 @@ def main():
             time.sleep(DELAY)
     append_lines(ALBUMS, new_links)
     append_lines(PLAYLISTS, new_links)
+    print("Wrote %d new link(s) to %s and %s" % (len(new_links), ALBUMS, PLAYLISTS))
     summary = "\n".join(["### Suno sync", "", "Added %d new link(s)." % len(new_links), ""] + report)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
