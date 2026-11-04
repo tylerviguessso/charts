@@ -1,0 +1,51 @@
+name: Sync Suno playlists and albums
+
+on:
+  schedule:
+    # GitHub schedules use UTC. These two cover 8:00am Pacific in both winter
+    # (16:00 UTC) and summer (15:00 UTC). The gate step below lets only the
+    # one that is actually 8am in Pacific time continue.
+    - cron: "0 15 * * *"
+    - cron: "0 16 * * *"
+  workflow_dispatch: # adds a "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: suno-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is it 8am Pacific?
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(TZ=America/Los_Angeles date +%H)" != "08" ]; then
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "Not 8am Pacific, skipping this run."
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == 'true'
+
+      - name: Fetch playlists and albums
+        if: steps.gate.outputs.go == 'true'
+        run: python3 scripts/sync_suno.py
+
+      - name: Commit changes
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add charts/albums/albums.txt charts/playlists.txt
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit."
+          else
+            git commit -m "Add new Suno playlists and albums"
+            git push
+          fi

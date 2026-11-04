@@ -1,0 +1,5 @@
+# Suno usernames to check every morning. One per line, with or without the @.
+# Lines starting with # are ignored.
+#
+# Example (remove the # to use):
+#   @someusername
