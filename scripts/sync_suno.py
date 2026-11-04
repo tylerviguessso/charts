@@ -16,8 +16,8 @@ import urllib.request
 # Paths are relative to the repo root. If your site is the repo named "charts",
 # the repo root IS .io/charts/, so these match .io/charts/albums/albums.txt etc.
 USERNAMES_CANDIDATES = ["usernames.txt", "charts/usernames.txt"]  # first one that exists is used
-ALBUMS = "albums/albums.txt"
-PLAYLISTS = "playlists.txt"
+ALBUMS = "../albums/albums.txt"
+PLAYLISTS = "../playlists.txt"
 HOSTS = ["https://studio-api-prod.suno.com", "https://studio-api.prod.suno.com"]
 MAX_PAGES = 30
 DELAY = 1.5  # seconds between requests, to be polite
