@@ -71,7 +71,7 @@ https://suno.com/playlist/ffc6effe-8463-41fc-b796-d106acb3ad75
 https://suno.com/playlist/7f9a7141-69e7-4bfd-82c2-6c33251ce029
 https://suno.com/playlist/812f05b6-0077-4af8-b378-a5959b30ff9c
 https://suno.com/album/80d5c058-966b-4c3e-8bed-650fbca21dfb
-https://suno.com/album/ab65dfbe-e0ca-45f0-9d89-0f0aa2b13065
+
 
 https://suno.com/playlist/64b3976f-b759-4e2e-a7a0-1a0f19ab3c55 | album | artist=Genno
 https://suno.com/playlist/f47d8e8e-c932-4083-9964-7d65aa638b18 | album | artist=Genno
